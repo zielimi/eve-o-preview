@@ -17,7 +17,7 @@ namespace EveOPreview.UI.Hotkeys
 		public HotkeyHandler(IntPtr target, Keys hotkey)
 		{
 			this._hotkeyId = HotkeyHandler._currentId;
-			HotkeyHandler._currentId = (HotkeyHandler._currentId + 1) & HotkeyHandler.MAX_ID;
+			HotkeyHandler._currentId = (HotkeyHandler._currentId + 255) & HotkeyHandler.MAX_ID;
 
 			this._hotkeyTarget = target;
 
