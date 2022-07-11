@@ -6,7 +6,9 @@ using System.Windows.Threading;
 using EveOPreview.Configuration;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.View;
+using EveOPreview.UI.Hotkeys;
 using MediatR;
+using System.Linq;
 
 namespace EveOPreview.Services
 {
@@ -30,6 +32,8 @@ namespace EveOPreview.Services
 		private readonly DispatcherTimer _thumbnailUpdateTimer;
 		private readonly IThumbnailViewFactory _thumbnailViewFactory;
 		private readonly Dictionary<IntPtr, IThumbnailView> _thumbnailViews;
+		private readonly Dictionary<string, int> _cycleableGroupsCounters; 
+		private readonly Dictionary<string, List<IntPtr>> _cycleableGroupsWindows;
 
 		private (IntPtr Handle, string Title) _activeClient;
 		private IntPtr _externalApplication;
@@ -63,6 +67,9 @@ namespace EveOPreview.Services
 
 			this._thumbnailViews = new Dictionary<IntPtr, IThumbnailView>();
 
+			this._cycleableGroupsCounters = new Dictionary<string, int>();
+			this._cycleableGroupsWindows = new Dictionary<string, List<IntPtr>>();
+
 			//  DispatcherTimer setup
 			this._thumbnailUpdateTimer = new DispatcherTimer();
 			this._thumbnailUpdateTimer.Tick += ThumbnailUpdateTimerTick;
@@ -75,12 +82,35 @@ namespace EveOPreview.Services
 		{
 			this._thumbnailUpdateTimer.Start();
 
+			foreach (CycleableGroup cycleableGroup in _configuration.GetCycleableGroupHotkeys())
+            {
+				GlobalHotKey.RegisterHotKey(cycleableGroup.hotkey, CycleWindowHandler);
+				this._cycleableGroupsCounters.Add(cycleableGroup.hotkey, 0);
+				this._cycleableGroupsWindows.Add(cycleableGroup.hotkey, Enumerable.Repeat(IntPtr.Zero, cycleableGroup.clients.Count).ToList());
+			}
+
 			this.RefreshThumbnails();
 		}
 
 		public void Stop()
 		{
 			this._thumbnailUpdateTimer.Stop();
+		}
+
+
+		private void CycleWindowHandler(string hotkey)
+        {
+			//if (_cycleableGroupsWindows[hotkey].Count == 0) return;
+			IntPtr nextWindowPtr = IntPtr.Zero;
+			if (_cycleableGroupsWindows[hotkey].Sum(ptr => ptr.ToInt64()) == 0) return;
+
+			while (nextWindowPtr == IntPtr.Zero)
+			{
+				nextWindowPtr = _cycleableGroupsWindows[hotkey][_cycleableGroupsCounters[hotkey] % _cycleableGroupsWindows[hotkey].Count];
+				_cycleableGroupsCounters[hotkey]++;
+			}
+			ThumbnailActivated(nextWindowPtr, false);
+
 		}
 
 		private void ThumbnailUpdateTimerTick(object sender, EventArgs e)
@@ -119,6 +149,14 @@ namespace EveOPreview.Services
 				view.ThumbnailActivated = this.ThumbnailActivated;
 				view.ThumbnailDeactivated = this.ThumbnailDeactivated;
 
+				foreach (CycleableGroup cycleableGroup in _configuration.GetCycleableGroupHotkeys())
+				{
+					if (cycleableGroup.clients.Contains(process.Title))
+                    {
+						_cycleableGroupsWindows[cycleableGroup.hotkey][cycleableGroup.clients.IndexOf(process.Title)] = process.Handle;
+                    }
+				}
+
 				view.RegisterHotkey(this._configuration.GetClientHotkey(view.Title));
 
 				this.ApplyClientLayout(view.Id, view.Title);
@@ -146,6 +184,14 @@ namespace EveOPreview.Services
 					view.Title = process.Title;
 					viewsAdded.Add(view.Title);
 
+					foreach (CycleableGroup cycleableGroup in _configuration.GetCycleableGroupHotkeys())
+					{
+						if (cycleableGroup.clients.Contains(process.Title))
+						{
+							_cycleableGroupsWindows[cycleableGroup.hotkey][cycleableGroup.clients.IndexOf(process.Title)] = process.Handle;
+						}
+					}
+
 					view.RegisterHotkey(this._configuration.GetClientHotkey(process.Title));
 
 					this.ApplyClientLayout(view.Id, view.Title);
@@ -160,6 +206,14 @@ namespace EveOPreview.Services
 				if (view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE)
 				{
 					viewsRemoved.Add(view.Title);
+				}
+
+				foreach (CycleableGroup cycleableGroup in _configuration.GetCycleableGroupHotkeys())
+				{
+					if (cycleableGroup.clients.Contains(process.Title))
+					{
+						_cycleableGroupsWindows[cycleableGroup.hotkey][cycleableGroup.clients.IndexOf(process.Title)] = IntPtr.Zero;
+					}
 				}
 
 				view.UnregisterHotkey();
@@ -418,12 +472,22 @@ namespace EveOPreview.Services
 			this._isHoverEffectActive = false;
 		}
 
-		private void ThumbnailActivated(IntPtr id)
+		private void ThumbnailActivated(IntPtr id, bool isMouseClick)
 		{
 			IThumbnailView view = this._thumbnailViews[id];
 
 			Task.Run(() =>
 				{
+					if (isMouseClick)
+                    {
+                        foreach (var group in _cycleableGroupsWindows)
+                        {
+							if (group.Value.Contains(id)) {
+								_cycleableGroupsCounters[group.Key] = group.Value.IndexOf(id)+1;
+							} 
+
+						}
+                    }
 					this._windowManager.ActivateWindow(view.Id);
 				})
 				.ContinueWith((task) =>

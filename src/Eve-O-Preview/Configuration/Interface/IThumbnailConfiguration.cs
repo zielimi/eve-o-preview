@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace EveOPreview.Configuration
@@ -37,6 +38,8 @@ namespace EveOPreview.Configuration
 		bool EnableActiveClientHighlight { get; set; }
 		Color ActiveClientHighlightColor { get; set; }
 		int ActiveClientHighlightThickness { get; set; }
+
+		List<CycleableGroup> GetCycleableGroupHotkeys();
 
 		Point GetDefaultThumbnailLocation();
 		Point GetThumbnailLocation(string currentClient, string activeClient, Point defaultLocation);

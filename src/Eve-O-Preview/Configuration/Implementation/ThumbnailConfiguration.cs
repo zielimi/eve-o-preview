@@ -53,6 +53,7 @@ namespace EveOPreview.Configuration.Implementation
 			this.EnableActiveClientHighlight = false;
 			this.ActiveClientHighlightColor = Color.GreenYellow;
 			this.ActiveClientHighlightThickness = 3;
+			this.CycleableGroupHotkeys = new Dictionary<string, List<string>>();
 		}
 
 		public bool MinimizeToTray { get; set; }
@@ -120,6 +121,8 @@ namespace EveOPreview.Configuration.Implementation
 		public int ActiveClientHighlightThickness { get; set; }
 
 		[JsonProperty]
+		public Dictionary<string, List<string>> CycleableGroupHotkeys { get; private set; }
+        [JsonProperty]
 		private Dictionary<string, Dictionary<string, Point>> PerClientLayout { get; set; }
 		[JsonProperty]
 		private Dictionary<string, Point> FlatLayout { get; set; }
@@ -131,8 +134,25 @@ namespace EveOPreview.Configuration.Implementation
 		private Dictionary<string, bool> DisableThumbnail { get; set; }
 		[JsonProperty]
 		private List<string> PriorityClients { get; set; }
+        
+		public List<CycleableGroup> GetCycleableGroupHotkeys()
+		{
+			if (CycleableGroupHotkeys.Count == 0)
+			{
+				return new List<CycleableGroup> { };
+			} 
+			else
+            {
+				List<CycleableGroup> cycleableGroupHotkeys = new List<CycleableGroup>();
+				foreach (var cycleableGroup in CycleableGroupHotkeys)
+                {
+					cycleableGroupHotkeys.Add(new CycleableGroup(cycleableGroup.Key, cycleableGroup.Value));
+                }
+				return cycleableGroupHotkeys;
+            }
+		}
 
-		public Point GetDefaultThumbnailLocation()
+        public Point GetDefaultThumbnailLocation()
 		{
 			// Returns default thumbnail location
 			// This location can be used for f.e. EVE clients sitting on the login screen

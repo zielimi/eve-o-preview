@@ -35,7 +35,7 @@ namespace EveOPreview.View
 		Action<IntPtr> ThumbnailFocused { get; set; }
 		Action<IntPtr> ThumbnailLostFocus { get; set; }
 
-		Action<IntPtr> ThumbnailActivated { get; set; }
+		Action<IntPtr, bool> ThumbnailActivated { get; set; }
 		Action<IntPtr, bool> ThumbnailDeactivated { get; set; }
 	}
 }

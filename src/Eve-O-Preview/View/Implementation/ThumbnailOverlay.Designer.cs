@@ -50,9 +50,9 @@
 			// OverlayLabel
 			// 
 			this.OverlayLabel.AutoSize = true;
-			this.OverlayLabel.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.OverlayLabel.ForeColor = System.Drawing.Color.DarkGray;
-			this.OverlayLabel.Location = new System.Drawing.Point(8, 8);
+			this.OverlayLabel.Font = new System.Drawing.Font("Arial", 10.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.OverlayLabel.ForeColor = System.Drawing.Color.White;
+			this.OverlayLabel.Location = new System.Drawing.Point(0, 0);
 			this.OverlayLabel.Name = "OverlayLabel";
 			this.OverlayLabel.Size = new System.Drawing.Size(25, 13);
 			this.OverlayLabel.TabIndex = 1;

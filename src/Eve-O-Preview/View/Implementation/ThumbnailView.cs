@@ -110,7 +110,7 @@ namespace EveOPreview.View
 
 		public Action<IntPtr> ThumbnailLostFocus { get; set; }
 
-		public Action<IntPtr> ThumbnailActivated { get; set; }
+		public Action<IntPtr, bool> ThumbnailActivated { get; set; }
 
 		public Action<IntPtr, bool> ThumbnailDeactivated { get; set; }
 
@@ -309,7 +309,7 @@ namespace EveOPreview.View
 			{
 				return;
 			}
-
+			// TODO tutaj 
 			this._hotkeyHandler = new HotkeyHandler(this.Handle, hotkey);
 			this._hotkeyHandler.Pressed += HotkeyPressed_Handler;
 			this._hotkeyHandler.Register();
@@ -475,7 +475,7 @@ namespace EveOPreview.View
 
 		private void HotkeyPressed_Handler(object sender, HandledEventArgs e)
 		{
-			this.ThumbnailActivated?.Invoke(this.Id);
+			this.ThumbnailActivated?.Invoke(this.Id, false);
 
 			e.Handled = true;
 		}
@@ -549,7 +549,7 @@ namespace EveOPreview.View
 					this.ThumbnailDeactivated?.Invoke(this.Id, true);
 					break;
 				case MouseButtons.Left:
-					this.ThumbnailActivated?.Invoke(this.Id);
+					this.ThumbnailActivated?.Invoke(this.Id, true);
 					break;
 				case MouseButtons.Right:
 				case MouseButtons.Left | MouseButtons.Right:
